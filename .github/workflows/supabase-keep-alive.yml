@@ -25,20 +25,16 @@ jobs:
           ping_project() {
             name="$1"
             url="$2"
-            key="$3"
 
-            if [ -z "$url" ] || [ -z "$key" ]; then
-              echo "$name is not configured. Add its URL and anon key secrets."
+            if [ -z "$url" ]; then
+              echo "$name is not configured. Add its URL secret."
               return 1
             fi
 
             url="${url%/}"
             echo "Pinging $name..."
-            auth_header=$(printf 'Authorization: %s %s' "Bearer" "$key")
             curl --fail-with-body --silent --show-error --max-time 30 \
-              -H "apikey: $key" \
-              -H "$auth_header" \
-              "$url/rest/v1/" > /dev/null
+              "$url/auth/v1/health" > /dev/null
             echo "$name responded successfully."
           }
 
