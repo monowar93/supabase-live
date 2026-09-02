@@ -1,0 +1,46 @@
+name: Keep Supabase projects active
+
+on:
+  schedule:
+    # Runs every day at 03:17 UTC, safely before the 7-day inactivity limit.
+    - cron: "17 3 * * *"
+  workflow_dispatch:
+
+jobs:
+  ping-supabase-projects:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Ping Supabase projects
+        env:
+          PROJECT_1_URL: ${{ secrets.SUPABASE_PROJECT_1_URL }}
+          PROJECT_1_KEY: ${{ secrets.SUPABASE_PROJECT_1_ANON_KEY }}
+          PROJECT_2_URL: ${{ secrets.SUPABASE_PROJECT_2_URL }}
+          PROJECT_2_KEY: ${{ secrets.SUPABASE_PROJECT_2_ANON_KEY }}
+          PROJECT_3_URL: ${{ secrets.SUPABASE_PROJECT_3_URL }}
+          PROJECT_3_KEY: ${{ secrets.SUPABASE_PROJECT_3_ANON_KEY }}
+        run: |
+          set -euo pipefail
+
+          ping_project() {
+            name="$1"
+            url="$2"
+            key="$3"
+
+            if [ -z "$url" ] || [ -z "$key" ]; then
+              echo "$name is not configured. Add its URL and anon key secrets."
+              return 1
+            fi
+
+            url="${url%/}"
+            echo "Pinging $name..."
+            curl --fail-with-body --silent --show-error --max-time 30 \
+              -H "apikey: $key" \
+              -H "Authorization: Bearer $key" \
+              "$url/rest/v1/" > /dev/null
+            echo "$name responded successfully."
+          }
+
+          ping_project "Project 1" "$PROJECT_1_URL" "$PROJECT_1_KEY"
+          ping_project "Project 2" "$PROJECT_2_URL" "$PROJECT_2_KEY"
+          ping_project "Project 3" "$PROJECT_3_URL" "$PROJECT_3_KEY"
