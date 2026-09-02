@@ -25,6 +25,7 @@ jobs:
           ping_project() {
             name="$1"
             url="$2"
+            key="$3"
 
             if [ -z "$url" ]; then
               echo "$name is not configured. Add its URL secret."
@@ -33,9 +34,25 @@ jobs:
 
             url="${url%/}"
             echo "Pinging $name..."
-            curl --fail-with-body --silent --show-error --max-time 30 \
-              "$url/auth/v1/health" > /dev/null
-            echo "$name responded successfully."
+            curl_args=()
+            if [ -n "$key" ]; then
+              auth_header=$(printf 'Authorization: %s %s' "Bearer" "$key")
+              curl_args=(-H "apikey: $key" -H "$auth_header")
+            fi
+
+            status_code=$(curl --silent --show-error --output /dev/null --write-out "%{http_code}" --max-time 30 \
+              "${curl_args[@]}" \
+              "$url/rest/v1/") || {
+              echo "$name ping request failed before receiving an HTTP response."
+              return 1
+            }
+
+            if [ "$status_code" = "000" ]; then
+              echo "$name did not return a valid HTTP status."
+              return 1
+            fi
+
+            echo "$name responded with HTTP $status_code."
           }
 
           ping_project "Project 1" "$PROJECT_1_URL" "$PROJECT_1_KEY"
