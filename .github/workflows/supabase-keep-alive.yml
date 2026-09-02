@@ -36,6 +36,7 @@ jobs:
             echo "Pinging $name..."
             curl --fail-with-body --silent --show-error --max-time 30 \
               -H "apikey: $key" \
+              -H "Authorization: Bearer $key" \
               "$url/rest/v1/" > /dev/null
             echo "$name responded successfully."
           }
