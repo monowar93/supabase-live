@@ -34,8 +34,10 @@ jobs:
 
             url="${url%/}"
             echo "Pinging $name..."
+            auth_header=$(printf 'Authorization: %s %s' "Bearer" "$key")
             curl --fail-with-body --silent --show-error --max-time 30 \
               -H "apikey: $key" \
+              -H "$auth_header" \
               "$url/rest/v1/" > /dev/null
             echo "$name responded successfully."
           }
